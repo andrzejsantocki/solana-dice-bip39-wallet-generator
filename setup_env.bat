@@ -20,8 +20,8 @@ if not exist "%VENV%\Scripts\python.exe" (
 call "%VENV%\Scripts\activate.bat"
 if errorlevel 1 exit /b 1
 
-python -m pip install --upgrade pip
-if errorlevel 1 exit /b 1
+rem Do NOT upgrade pip here: that can contact the network.
+rem Use the venv-bundled pip only, then install strictly from local pkgs/.
 
 if not exist "%PKGS%" (
   echo Missing pkgs folder. Refusing online install.
