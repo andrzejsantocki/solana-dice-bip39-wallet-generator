@@ -36,6 +36,10 @@ class PublishedVectorTests(unittest.TestCase):
         address, _secret32 = gw.sol_from_seed(seed, (44, 501, 0, 0))
         self.assertEqual(address, 'HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk')
 
+    def test_solana_derivation_path_must_be_explicit(self):
+        with self.assertRaises(TypeError):
+            gw.sol_from_seed(b'0' * 64)
+
     def test_slip0010_ed25519_vector_1_master_and_m_0h(self):
         seed = bytes.fromhex('000102030405060708090a0b0c0d0e0f')
         k, c = gw.slip10_ed25519_master(seed)

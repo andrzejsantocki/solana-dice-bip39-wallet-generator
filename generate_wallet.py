@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Offline BTC + SOL wallet generator from physical dice entropy.
-Run ONLY on an air-gapped machine, after installing pinned/hash-verified
-wheels via: pip install --no-index --find-links=./pkgs -r requirements-hashes.txt --require-hashes
+Run ONLY on an air-gapped machine, after setup_env.bat installs pinned/hash-verified
+wheels from local pkgs/ using --no-index and --require-hashes
 
 Uses:
   - mnemonic  (BIP39 wordlist + checksum + PBKDF2 seed derivation)
@@ -11,7 +11,7 @@ Uses:
 No network access is used or required anywhere in this script.
 """
 
-import argparse, hashlib, hmac, getpass, os, random, re, subprocess, sys
+import argparse, hashlib, hmac, getpass, random, re, sys
 from pathlib import Path
 from importlib import metadata
 
@@ -65,23 +65,11 @@ def _installed_deps_match(expected):
 def enforce_local_verified_packages():
     expected = _parse_requirements_hashes()
     _verify_local_wheel_hashes(expected)
-    cmd = [
-        sys.executable, "-m", "pip", "install",
-        "--no-index",
-        f"--find-links={PKGS_DIR}",
-        "--require-hashes",
-        "--force-reinstall",
-        "-r", str(REQ_HASHES),
-    ]
-    env = dict(os.environ)
-    env["PIP_NO_INDEX"] = "1"
-    env["PIP_FIND_LINKS"] = str(PKGS_DIR)
-    env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
-    res = subprocess.run(cmd, cwd=str(ROOT), env=env, text=True, capture_output=True)
-    if res.returncode != 0:
-        raise SystemExit("Local hash-verified dependency install failed:\n" + res.stdout + res.stderr)
     if not _installed_deps_match(expected):
-        raise SystemExit("Dependency versions still mismatch after local hash-verified install")
+        raise SystemExit(
+            "Dependency versions mismatch or missing. Run setup_env.bat first; "
+            "wallet generation performs zero package installation."
+        )
 
 
 enforce_local_verified_packages()
@@ -89,10 +77,6 @@ enforce_local_verified_packages()
 from mnemonic import Mnemonic
 from ecdsa import SigningKey, SECP256k1
 import nacl.signing
-try:
-    import pyfiglet
-except ImportError:
-    pyfiglet = None
 
 COLOR_ENABLED = False
 ANSI = {
@@ -236,13 +220,11 @@ def mnemonic_gap_check(words):
     mnemo = Mnemonic('english')
     idxs = sorted(random.sample(range(len(parts)), k=min(5, len(parts))))
     print("\n=== MNEMONIC GAP CHECK ===")
-    print("Fill the missing words:")
+    print("Mnemonic was shown once above. To reduce scrollback exposure, it is not reprinted here.")
+    print("Fill the requested missing words from your paper/steel backup:")
     answers = []
     for idx in idxs:
-        prompt_words = parts.copy()
-        prompt_words[idx] = '____'
-        print(f"{idx+1:02d}: " + ' '.join(prompt_words))
-        ans = input(f"Word #{idx+1}: ").strip().lower()
+        ans = input(f"Enter word #{idx+1}: ").strip().lower()
         answers.append((idx, ans))
     wrong = []
     for idx, ans in answers:
@@ -342,9 +324,10 @@ def hash_rolls_to_bits(rolls, num_bits):
     return bytes_to_bits(bytes(out), num_bits)
 
 
-def collect_hash_roll_entropy_bits(num_bits, roll_count=100):
+def collect_hash_roll_entropy_bits(num_bits, roll_count=150):
     rolls = []
     print(f"\nNeed {roll_count} physical die rolls. App hashes exact transcript with SHA256.")
+    print(colorize("WARNING: the complete dice-roll transcript is secret key material. Never photograph, save, print, log, or retain it.", "red"))
     print("Enter 1 die roll at a time (1-6). Type 'q' to abort.\n")
     while len(rolls) < roll_count:
         raw = input(f"[{len(rolls)}/{roll_count} rolls] roll: ").strip()
@@ -548,7 +531,9 @@ def slip10_ed25519_ckd(k_par, c_par, index):
     I = hmac.new(c_par, data, hashlib.sha512).digest()
     return I[:32], I[32:]
 
-def sol_from_seed(seed, path=(44, 501, 0, 0, 0)):
+def sol_from_seed(seed, path):
+    if path is None:
+        raise ValueError("Solana derivation path must be explicit")
     k, c = slip10_ed25519_master(seed)
     for level in path:
         k, c = slip10_ed25519_ckd(k, c, level)
@@ -623,10 +608,7 @@ def main(argv=None):
     if args.bad_dice_report:
         print_bad_dice_report()
         return
-    if pyfiglet:
-        print(colorize(pyfiglet.figlet_format("Wallet Dice"), "cyan"))
-    else:
-        print(colorize("Wallet Dice", "cyan"))
+    print(colorize("Wallet Dice", "cyan"))
     print(colorize("=== Offline dice-based BTC + SOL wallet generator ===", "bold"))
     entropy_bits = 128 if args.words == 12 else 256
 

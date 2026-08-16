@@ -21,6 +21,7 @@ What this does not solve:
 - Compromised OS, firmware, keyboard, monitor, printer, camera, terminal, RAM, swap, hibernation files, crash dumps, or malware.
 - Human transcription errors.
 - Bad/fake dice entropy.
+- Dice-roll transcript leakage. In hash-rolls mode, the complete dice transcript is secret key material; anyone with all rolls can reproduce the wallet.
 - Wrong derivation path during restore.
 - Secure zeroization of Python strings or terminal scrollback.
 - Any claim of “100% unbreakable” security.
@@ -33,7 +34,8 @@ Use tiny test deposits and independent restore checks before sending meaningful 
 - Conservative entropy mode: `von-neumann`.
 - Hash-rolls mode default: 150 physical d6 rolls.
 - Private material for alternate paths hidden unless explicitly requested.
-- Runtime dependency install is forced from local `pkgs/` only, with `--require-hashes`.
+- Dependencies are installed only by `setup_env.bat` from local `pkgs/` with `--require-hashes`.
+- Wallet generation performs zero package installation at runtime.
 
 ## Install / run offline
 
@@ -71,16 +73,19 @@ python generate_wallet.py --show-private-derivations
 
 ## Dependency enforcement
 
-At startup, before importing wallet dependencies, the script:
+Setup is separate from wallet generation:
 
-1. reads `requirements-hashes.txt`
-2. verifies local wheel hashes in `pkgs/`
-3. runs pip with:
+1. `setup_env.bat` requires 64-bit CPython 3.10 because bundled wheels target cp310/win_amd64.
+2. `setup_env.bat` refuses missing `pkgs/` and installs only with:
    - `--no-index`
    - `--find-links=./pkgs`
    - `--require-hashes`
-   - `--force-reinstall`
-4. refuses to continue on missing/mismatched wheels
+3. `generate_wallet.py` performs zero package installation.
+4. At wallet-generation startup, it only verifies:
+   - `requirements-hashes.txt`
+   - local wheel SHA256 hashes
+   - installed package versions
+5. It refuses to continue on missing/mismatched dependencies.
 
 ## Verification
 
@@ -119,11 +124,12 @@ Same mnemonic plus different path means different address. Record the path and f
 1. Use a fresh offline machine.
 2. Install only from local `pkgs/`.
 3. Roll physical dice yourself.
-4. Write mnemonic/passphrase on paper or steel only.
-5. Record derivation path and first address.
-6. Restore independently in Sparrow/Electrum and Phantom/Solflare before funding.
-7. Send tiny test deposit first.
-8. Only then send meaningful funds.
+4. Treat the complete dice-roll transcript as secret key material: never photograph, save, print, log, or retain it.
+5. Write mnemonic/passphrase on paper or steel only.
+6. Record derivation path and first address.
+7. Restore independently in Sparrow/Electrum and Phantom/Solflare before funding.
+8. Send tiny test deposit first.
+9. Only then send meaningful funds.
 
 ## License
 
