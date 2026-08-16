@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720">
+  <rect width="1100" height="720" fill="#f7f7f2"/>
+  <rect x="60" y="50" width="980" height="620" rx="10" fill="#ffffff" stroke="#d8d8d0"/>
+  <rect x="60" y="50" width="980" height="42" rx="10" fill="#24292f"/>
+  <text x="85" y="77" fill="#f0f0f0" font-family="Consolas, Menlo, monospace" font-size="16">wallet-local-dice-generator — airgapped CLI</text>
+  <g font-family="Consolas, Menlo, monospace" font-size="17" fill="#24292f">
+    <text x="85" y="130">$ python generate_wallet.py --entropy-mode von-neumann --words 24</text>
+    <text x="85" y="170" font-weight="700">=== Offline dice-based BTC + SOL wallet generator ===</text>
+    <text x="85" y="210">Need 256 unbiased bits.</text>
+    <text x="85" y="240">Enter 1 die roll at a time (1-6). App pairs in code.</text>
+    <text x="85" y="285" fill="#b42318" font-weight="700">=== RANDOMNESS QUALITY REPORT ===</text>
+    <text x="85" y="320">Verdict:       GOOD</text>
+    <text x="85" y="350">Rolls:         578</text>
+    <text x="85" y="380">Non-tie pairs: 256</text>
+    <text x="85" y="410">Warnings:      none</text>
+    <text x="85" y="465" fill="#936f00" font-weight="700">MNEMONIC (write on paper/steel; terminal cannot securely erase secrets)</text>
+    <text x="85" y="500" fill="#1a7f37">[24 BIP39 words hidden in screenshot]</text>
+    <text x="85" y="545" fill="#0969da" font-weight="700">--- Common wallet derivation conventions ---</text>
+    <text x="85" y="580">[BTC] m/44'/0'/0'/0/0     Address: 1...</text>
+    <text x="85" y="610">[SOL] m/44'/501'/0'/0'    Address: 9...</text>
+    <text x="85" y="640" fill="#b42318">Private material hidden. Verify restore before sending funds.</text>
+  </g>
+</svg>
