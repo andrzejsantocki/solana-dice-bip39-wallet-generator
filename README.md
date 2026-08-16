@@ -1,5 +1,7 @@
 # Solana Dice BIP39 Wallet Generator
 
+![Offline Solana Wallet Generator cover](assets/cover.png)
+
 Offline Solana wallet generator from physical dice entropy.
 
 ![CLI screenshot](assets/screenshot.svg)
