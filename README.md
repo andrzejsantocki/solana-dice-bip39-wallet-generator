@@ -90,7 +90,13 @@ Setup is separate from wallet generation:
 
 ## Verification
 
-This public repository does not currently ship its local development test suite or GitHub Actions workflow. Before trusting any release for real funds, independently verify the generated mnemonic/address flow against known BIP39, SLIP-0010 ed25519, and Solana derivation vectors, then restore the address in your target wallet before funding.
+Run the built-in self-test before any wallet ceremony:
+
+```bat
+.venv\Scripts\python.exe -I generate_wallet.py --self-test
+```
+
+The self-test checks BIP39 official entropy/seed vectors, SLIP-0010 ed25519 master/child vectors, Base58 leading-zero encoding, and Solana golden addresses for `m/44'/501'/0'/0'`, `m/44'/501'/1'/0'`, and the BIP39 `TREZOR` passphrase case. This public repository does not currently ship its local development test suite or GitHub Actions workflow.
 
 ## Recommended ceremony
 

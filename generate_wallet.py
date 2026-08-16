@@ -39,7 +39,8 @@ def _verify_local_wheel_hashes(expected):
     wheels = {p.name.lower(): p for p in PKGS_DIR.glob("*.whl")}
     matched = {}
     for name, (version, digest) in expected.items():
-        candidates = [p for fname, p in wheels.items() if fname.startswith(f"{name}-{version}".lower().replace("_", "-"))]
+        expected_prefix = f"{name}-{version}-".lower().replace("_", "-")
+        candidates = [p for fname, p in wheels.items() if fname.replace("_", "-").startswith(expected_prefix)]
         if not candidates:
             raise SystemExit(f"Missing wheel in pkgs/: {name}=={version}")
         trusted = [p for p in candidates if hashlib.sha256(p.read_bytes()).hexdigest() == digest]
@@ -343,6 +344,42 @@ def print_bad_dice_report():
         print_quality_report(analyze_roll_quality(rolls, pairs, target))
 
 
+def run_self_test():
+    """Run published cryptographic vectors before any wallet material exists."""
+    checks = []
+
+    entropy = bytes.fromhex("00000000000000000000000000000000")
+    words = Mnemonic("english").to_mnemonic(entropy)
+    checks.append(("BIP39 entropy->mnemonic", words == "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"))
+    seed_hex = Mnemonic("english").to_seed(words, "TREZOR").hex()
+    checks.append(("BIP39 mnemonic+passphrase->seed", seed_hex == "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04"))
+
+    slip_seed = bytes.fromhex("000102030405060708090a0b0c0d0e0f")
+    k, c = slip10_ed25519_master(slip_seed)
+    checks.append(("SLIP-0010 ed25519 master private key", k.hex() == "2b4be7f19ee27bbf30c667b642d5f4aa69fd169872f8fc3059c08ebae2eb19e7"))
+    checks.append(("SLIP-0010 ed25519 master chain code", c.hex() == "90046a93de5380a72b5e45010748567d5ea02bbf6522f979e05c0d8d8ca9fffb"))
+    checks.append(("SLIP-0010 ed25519 master public key", (b"\x00" + nacl.signing.SigningKey(k).verify_key.encode()).hex() == "00a4b2856bfec510abab89753fac1ac0e1112364e7d250545963f135f2a33188ed"))
+    k, c = slip10_ed25519_ckd(k, c, 0)
+    checks.append(("SLIP-0010 ed25519 m/0' private key", k.hex() == "68e0fe46dfb67e368c75379acec591dad19df3cde26e63b93a8e704f1dade7a3"))
+    checks.append(("SLIP-0010 ed25519 m/0' chain code", c.hex() == "8b59aa11380b624e81507a27fedda59fea6d0b779a778918a2fd3590e16e9c69"))
+    checks.append(("SLIP-0010 ed25519 m/0' public key", (b"\x00" + nacl.signing.SigningKey(k).verify_key.encode()).hex() == "008c8a13df77a28f3445213a0f432fde644acaa215fc72dcdf300d5efaa85d350c"))
+
+    seed = Mnemonic("english").to_seed(words, "")
+    checks.append(("Solana m/44'/501'/0'/0' address", sol_from_seed(seed, (44, 501, 0, 0))[0] == "HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk"))
+    checks.append(("Solana m/44'/501'/1'/0' address", sol_from_seed(seed, (44, 501, 1, 0))[0] == "Hh8QwFUA6MtVu1qAoq12ucvFHNwCcVTV7hpWjeY1Hztb"))
+    pass_seed = Mnemonic("english").to_seed(words, "TREZOR")
+    checks.append(("Solana TREZOR passphrase address", sol_from_seed(pass_seed, (44, 501, 0, 0))[0] == "7zSmbu6gKkb6HB7UDPtHYjwCWuBHU1D4TpNZFm4sndQe"))
+    checks.append(("Base58 leading-zero vector", b58encode(b"\x00\x00\x01") == "112"))
+
+    failed = [name for name, ok in checks if not ok]
+    print("\n=== SELF-TEST: PUBLISHED CRYPTO VECTORS ===")
+    for name, ok in checks:
+        print(("PASS " if ok else "FAIL ") + name)
+    if failed:
+        raise SystemExit("Self-test failed: " + "; ".join(failed))
+    print("Self-test: PASS")
+
+
 def parse_args(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     argv = ["--help" if arg == "/help" or arg.replace("\\", "/").endswith("/help") else arg for arg in argv]
@@ -356,6 +393,7 @@ def parse_args(argv=None):
     parser.add_argument("--color", choices=("auto", "always", "never"), default="auto")
     parser.add_argument("--no-color", dest="color", action="store_const", const="never")
     parser.add_argument("--bad-dice-report", action="store_true", help="Print synthetic bad/dishonest dice quality examples, then exit")
+    parser.add_argument("--self-test", action="store_true", help="Run BIP39, SLIP-0010, Base58 and Solana golden vectors, then exit")
     parser.set_defaults(gap_check=True)
     args = parser.parse_args(argv)
     min_rolls = MIN_HASH_ROLLS_24 if args.words == 24 else MIN_HASH_ROLLS_12
@@ -367,6 +405,8 @@ def parse_args(argv=None):
 def main(argv=None):
     args = parse_args(argv)
     configure_color(args.color)
+    if args.self_test:
+        run_self_test(); return
     if args.bad_dice_report:
         print_bad_dice_report(); return
     print(colorize("Wallet Dice", "cyan"))
