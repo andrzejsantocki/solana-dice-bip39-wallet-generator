@@ -1,5 +1,6 @@
 import ast
 import io
+import random
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -53,6 +54,34 @@ class OperationalSafetyTests(unittest.TestCase):
         self.assertFalse(args.bip39_passphrase)
         args = gw.parse_args(['--bip39-passphrase'])
         self.assertTrue(args.bip39_passphrase)
+
+    def test_die_roll_input_uses_hidden_getpass(self):
+        text = Path('generate_wallet.py').read_text(encoding='utf-8')
+        self.assertIn('def hidden_die_roll', text)
+        self.assertIn('getpass.getpass(prompt)', text)
+        self.assertNotIn('raw = input(', text)
+
+    def test_fair_von_neumann_sessions_mostly_pass_gate(self):
+        random.seed(1234)
+        passes = 0
+        trials = 200
+        for _ in range(trials):
+            rolls = []
+            pairs = []
+            bits = 0
+            while bits < 256:
+                a = random.randint(1, 6); b = random.randint(1, 6)
+                rolls.extend([a, b]); pairs.append((a, b))
+                if a != b: bits += 1
+            q = gw.analyze_roll_quality(rolls, pairs, 256)
+            if not q['warnings']:
+                passes += 1
+        self.assertGreaterEqual(passes / trials, 0.90)
+
+    def test_import_location_verification_exists(self):
+        text = Path('generate_wallet.py').read_text(encoding='utf-8')
+        self.assertIn('def verify_import_locations', text)
+        self.assertIn('Path(sys.prefix).resolve()', text)
 
 
 if __name__ == '__main__':

@@ -44,5 +44,5 @@ if errorlevel 1 exit /b 1
 
 echo.
 echo Ready. Venv: %VENV%
-echo Run: %VENV%\Scripts\python.exe generate_wallet.py
+echo Run: %VENV%\Scripts\python.exe -I generate_wallet.py
 endlocal

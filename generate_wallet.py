@@ -65,7 +65,20 @@ def enforce_local_verified_packages():
 enforce_local_verified_packages()
 
 from mnemonic import Mnemonic
+import mnemonic as _mnemonic_module
+import nacl
 import nacl.signing
+
+
+def verify_import_locations():
+    prefix = Path(sys.prefix).resolve()
+    for module in (_mnemonic_module, nacl):
+        module_file = Path(module.__file__).resolve()
+        if prefix not in module_file.parents:
+            raise SystemExit(f"Imported dependency outside expected environment: {module.__name__} from {module_file}")
+
+
+verify_import_locations()
 
 COLOR_ENABLED = False
 ANSI = {"reset":"\033[0m","bold":"\033[1m","green":"\033[32m","yellow":"\033[33m","red":"\033[31m","cyan":"\033[36m","dim":"\033[2m"}
@@ -141,26 +154,23 @@ def analyze_roll_quality(rolls, pair_bits=None, target_bits=None):
     face_min = min(face_counts.values()) if face_counts else 0
     warnings = []
     if n < 24: warnings.append("low sample size (<24 rolls)")
-    if total_pairs and ties > max(2, total_pairs * 0.35): warnings.append("high tie rate")
-    if max_streak >= 5: warnings.append("long streak detected")
-    if face_min == 0: warnings.append("one or more faces never appeared")
-    if chi2 > 15.09: warnings.append("chi-square p<0.01 vs uniform")
+    if total_pairs:
+        expected_ties = total_pairs / 6
+        sigma = (total_pairs * (1/6) * (5/6)) ** 0.5
+        if sigma and abs(ties - expected_ties) > 4 * sigma:
+            warnings.append("tie rate deviates from fair-die expectation")
+    if max_streak >= 8: warnings.append("very long streak detected")
+    if face_min == 0 and n >= 60: warnings.append("one or more faces never appeared")
+    if chi2 > 20.52: warnings.append("chi-square p<0.001 vs uniform")
     if check_pair_yield and non_tie_pairs < target_bits: warnings.append("insufficient unbiased bit yield")
-    score = 100
-    score -= min(30, max(0, 24 - n)) * 2
-    score -= min(20, int(ties * 2))
-    score -= min(20, max(0, max_streak - 3) * 4)
-    score -= min(20, int(max(0, chi2 - 5)))
-    score -= 15 if face_min == 0 else 0
-    score -= 15 if check_pair_yield and non_tie_pairs < target_bits else 0
-    score = max(0, min(100, score))
-    verdict = "GOOD" if score >= 80 and not warnings else "OK" if score >= 55 else "SUSPECT"
+    score = 100 if not warnings else 60
+    verdict = "NO_ANOMALY" if not warnings else "SUSPECT"
     return {"roll_count":n,"pair_count":total_pairs,"tie_count":ties,"non_tie_pairs":non_tie_pairs,"face_counts":face_counts,"chi2":chi2,"max_streak":max_streak,"warnings":warnings,"score":score,"verdict":verdict}
 
 
 def print_quality_report(q):
     print("\n" + colorize("=== RANDOMNESS QUALITY REPORT ===", "bold"))
-    verdict_color = "green" if q["verdict"] == "GOOD" else "yellow" if q["verdict"] == "OK" else "red"
+    verdict_color = "green" if q["verdict"] == "NO_ANOMALY" else "red"
     print("Verdict:       " + colorize(q["verdict"], verdict_color))
     print(f"Score:         {q['score']}/100")
     print(f"Rolls:         {q['roll_count']}")
@@ -174,8 +184,8 @@ def print_quality_report(q):
 
 
 def abort_if_not_good(q):
-    if q["verdict"] != "GOOD" or q["warnings"]:
-        raise SystemExit("Aborted: randomness quality is not GOOD. Do not generate/fund a wallet from suspect entropy.")
+    if q["warnings"]:
+        raise SystemExit("Aborted: statistical anomaly detected in dice transcript. Do not generate/fund a wallet from suspect entropy.")
 
 
 def hash_rolls_to_bits(rolls, num_bits):
@@ -183,6 +193,10 @@ def hash_rolls_to_bits(rolls, num_bits):
     for r in rolls:
         if r < 1 or r > 6: raise ValueError("die rolls must be integers 1-6")
     return bytes_to_bits(hashlib.sha256("".join(str(r) for r in rolls).encode("ascii")).digest(), num_bits)
+
+
+def hidden_die_roll(prompt):
+    return getpass.getpass(prompt).strip()
 
 
 def collect_hash_roll_entropy_bits(num_bits, roll_count):
@@ -194,7 +208,7 @@ def collect_hash_roll_entropy_bits(num_bits, roll_count):
     print(colorize("Treat the complete dice-roll transcript as secret key material.", "yellow"))
     print("Enter 1 die roll at a time (1-6). Input is not echoed back. Type 'q' to abort.\n")
     while len(rolls) < roll_count:
-        raw = input(f"[{len(rolls)}/{roll_count} rolls] roll: ").strip()
+        raw = hidden_die_roll(f"[{len(rolls)}/{roll_count} rolls] roll: ")
         if raw.lower() == "q": raise SystemExit("Aborted.")
         try:
             r = int(raw)
@@ -222,7 +236,7 @@ def collect_entropy_bits(num_bits):
             q['verdict'] = 'SUSPECT'
             print_quality_report(q)
             abort_if_not_good(q)
-        raw = input(f"[{len(bits)}/{num_bits} bits] roll: ").strip()
+        raw = hidden_die_roll(f"[{len(bits)}/{num_bits} bits] roll: ")
         if raw.lower() == "q": raise SystemExit("Aborted.")
         try:
             r = int(raw)
@@ -348,7 +362,7 @@ def main(argv=None):
     print(colorize("=" * 60, "yellow"))
     passphrase = ""
     if args.bip39_passphrase:
-        print(colorize("\nBIP39 PASSPHRASE MODE: this changes the derived seed. Confirm your target wallet supports restoring mnemonic + passphrase before funding.", "yellow"))
+        print(colorize("\nBIP39 PASSPHRASE MODE: recovery requires BOTH the mnemonic and exact BIP39 passphrase. Wallets without BIP39 passphrase entry derive different addresses. Verify recovery before funding.", "yellow"))
         passphrase = getpass.getpass("BIP39 passphrase (leave blank for none): ")
         if passphrase and getpass.getpass("Confirm passphrase: ") != passphrase:
             raise SystemExit("Passphrase mismatch.")

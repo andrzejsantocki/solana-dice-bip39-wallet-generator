@@ -31,6 +31,18 @@ class PublishedVectorTests(unittest.TestCase):
         address, _secret32 = gw.sol_from_seed(seed, (44, 501, 0, 0))
         self.assertEqual(address, 'HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk')
 
+    def test_end_to_end_solana_account_1_golden_vector(self):
+        words = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+        seed = gw.Mnemonic('english').to_seed(words, '')
+        address, _secret32 = gw.sol_from_seed(seed, (44, 501, 1, 0))
+        self.assertEqual(address, 'Hh8QwFUA6MtVu1qAoq12ucvFHNwCcVTV7hpWjeY1Hztb')
+
+    def test_end_to_end_solana_passphrase_golden_vector(self):
+        words = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+        seed = gw.Mnemonic('english').to_seed(words, 'TREZOR')
+        address, _secret32 = gw.sol_from_seed(seed, (44, 501, 0, 0))
+        self.assertEqual(address, '7zSmbu6gKkb6HB7UDPtHYjwCWuBHU1D4TpNZFm4sndQe')
+
     def test_solana_derivation_path_must_be_explicit(self):
         with self.assertRaises(TypeError):
             gw.sol_from_seed(b'0' * 64)

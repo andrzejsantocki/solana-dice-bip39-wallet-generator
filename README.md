@@ -44,31 +44,31 @@ On the air-gapped Windows machine:
 
 ```bat
 setup_env.bat
-.venv\Scripts\python.exe generate_wallet.py
+.venv\Scripts\python.exe -I generate_wallet.py
 ```
 
 Hash-rolls mode:
 
 ```bat
-.venv\Scripts\python.exe generate_wallet.py --entropy-mode hash-rolls --roll-count 150
+.venv\Scripts\python.exe -I generate_wallet.py --entropy-mode hash-rolls --roll-count 150
 ```
 
 Bad dice report:
 
 ```bat
-.venv\Scripts\python.exe generate_wallet.py --bad-dice-report --color always
+.venv\Scripts\python.exe -I generate_wallet.py --bad-dice-report --color always
 ```
 
 ## BIP39 passphrase compatibility
 
 By default, this tool uses no BIP39 passphrase. That matches common Phantom/Solflare recovery flows that ask for only the 12/24 words.
 
-A BIP39 passphrase changes the seed completely. The same words with a passphrase produce different Solana addresses. Do not fund a passphrase-derived wallet unless you have independently restored the same address in software that explicitly supports BIP39 passphrase + the same derivation path.
+A BIP39 passphrase changes the seed completely. The same words with a passphrase produce different Solana addresses. This wallet requires BOTH the mnemonic and the exact BIP39 passphrase for recovery. A wallet that does not support BIP39 passphrase entry will derive different addresses. Do not fund a passphrase-derived wallet unless you have independently restored the same address in software that explicitly supports BIP39 passphrase + the same derivation path.
 
 Use passphrase mode only if you have tested the full restore path:
 
 ```bat
-.venv\Scripts\python.exe generate_wallet.py --bip39-passphrase
+.venv\Scripts\python.exe -I generate_wallet.py --bip39-passphrase
 ```
 
 ## Dependency enforcement
