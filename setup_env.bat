@@ -22,10 +22,9 @@ if not exist "%VENV%\Scripts\python.exe" (
   )
 )
 
-call "%VENV%\Scripts\activate.bat"
-if errorlevel 1 exit /b 1
-
-python -c "import sys; assert sys.version_info[:2] == (3, 10), 'Venv must use Python 3.10'; print(sys.version)"
+rem No PATH-dependent activation: always invoke the venv interpreter
+rem explicitly so a hostile or stale PATH cannot redirect any step.
+"%VENV%\Scripts\python.exe" -c "import sys; assert sys.version_info[:2] == (3, 10), 'Venv must use Python 3.10'; print(sys.version)"
 if errorlevel 1 (
   echo Existing venv is not Python 3.10. Delete .venv and rerun setup_env.bat.
   exit /b 1
@@ -39,7 +38,7 @@ if not exist "%PKGS%" (
   exit /b 1
 )
 
-pip install --no-index --find-links="%PKGS%" -r "%REQ%" --require-hashes
+"%VENV%\Scripts\python.exe" -m pip install --no-index --find-links="%PKGS%" -r "%REQ%" --require-hashes
 if errorlevel 1 exit /b 1
 
 echo.

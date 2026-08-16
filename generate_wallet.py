@@ -37,12 +37,18 @@ def _verify_local_wheel_hashes(expected):
     if not PKGS_DIR.is_dir():
         raise SystemExit(f"Missing local package dir: {PKGS_DIR}")
     wheels = {p.name.lower(): p for p in PKGS_DIR.glob("*.whl")}
+    matched = {}
     for name, (version, digest) in expected.items():
         candidates = [p for fname, p in wheels.items() if fname.startswith(f"{name}-{version}".lower().replace("_", "-"))]
         if not candidates:
             raise SystemExit(f"Missing wheel in pkgs/: {name}=={version}")
-        if not any(hashlib.sha256(p.read_bytes()).hexdigest() == digest for p in candidates):
+        trusted = [p for p in candidates if hashlib.sha256(p.read_bytes()).hexdigest() == digest]
+        if not trusted:
             raise SystemExit(f"Hash mismatch for pkgs/{candidates[0].name}; refusing to load dependencies")
+        matched[name] = trusted[0].name.lower()
+    extra_wheels = sorted(set(wheels) - set(matched.values()))
+    if extra_wheels:
+        raise SystemExit("Unexpected wheel(s) in pkgs/: " + ", ".join(extra_wheels))
 
 
 def _installed_deps_match(expected):
@@ -129,7 +135,16 @@ def bits_to_bytes(bits):
     return bytes(out)
 
 
-def analyze_roll_quality(rolls, pair_bits=None, target_bits=None):
+def analyze_roll_quality(rolls, pair_bits=None, target_bits=None, mode="hash-rolls"):
+    """Structural anomaly screen.
+
+    mode='von-neumann': skip fair-die uniformity gates (chi-square, tie rate)
+    because the </> extractor debiases any single IID die; face uniformity is
+    irrelevant to output-bit quality. Keep structural gates (streaks, missing
+    faces, pair yield, sample size).
+
+    mode='hash-rolls': also require fair-die uniformity, because hashing a
+    biased transcript does not create the missing entropy."""
     n = len(rolls)
     pair_bits = [] if pair_bits is None else pair_bits
     check_pair_yield = target_bits is not None
@@ -154,25 +169,26 @@ def analyze_roll_quality(rolls, pair_bits=None, target_bits=None):
     face_min = min(face_counts.values()) if face_counts else 0
     warnings = []
     if n < 24: warnings.append("low sample size (<24 rolls)")
-    if total_pairs:
+    uniform_gate = mode == "hash-rolls"
+    if total_pairs and uniform_gate:
         expected_ties = total_pairs / 6
         sigma = (total_pairs * (1/6) * (5/6)) ** 0.5
         if sigma and abs(ties - expected_ties) > 4 * sigma:
             warnings.append("tie rate deviates from fair-die expectation")
     if max_streak >= 8: warnings.append("very long streak detected")
     if face_min == 0 and n >= 60: warnings.append("one or more faces never appeared")
-    if chi2 > 20.52: warnings.append("chi-square p<0.001 vs uniform")
+    if uniform_gate and chi2 > 20.52: warnings.append("chi-square p<0.001 vs uniform")
     if check_pair_yield and non_tie_pairs < target_bits: warnings.append("insufficient unbiased bit yield")
-    score = 100 if not warnings else 60
     verdict = "NO_ANOMALY" if not warnings else "SUSPECT"
-    return {"roll_count":n,"pair_count":total_pairs,"tie_count":ties,"non_tie_pairs":non_tie_pairs,"face_counts":face_counts,"chi2":chi2,"max_streak":max_streak,"warnings":warnings,"score":score,"verdict":verdict}
+    return {"roll_count":n,"pair_count":total_pairs,"tie_count":ties,"non_tie_pairs":non_tie_pairs,"face_counts":face_counts,"chi2":chi2,"max_streak":max_streak,"warnings":warnings,"verdict":verdict}
 
 
 def print_quality_report(q):
-    print("\n" + colorize("=== RANDOMNESS QUALITY REPORT ===", "bold"))
+    print("\n" + colorize("=== DICE ANOMALY SCREEN ===", "bold"))
     verdict_color = "green" if q["verdict"] == "NO_ANOMALY" else "red"
     print("Verdict:       " + colorize(q["verdict"], verdict_color))
-    print(f"Score:         {q['score']}/100")
+    if q["verdict"] == "NO_ANOMALY":
+        print("Meaning:       No obvious statistical anomaly detected; this does not prove entropy or detect adversarial/fake dice.")
     print(f"Rolls:         {q['roll_count']}")
     print(f"Pairs:         {q['pair_count']}")
     print(f"Ties:          {q['tie_count']}")
@@ -228,10 +244,12 @@ def collect_entropy_bits(num_bits):
     bits, rolls, pair_bits, pending = [], [], [], []
     max_rolls = max(48, num_bits * 8)
     print(f"\nNeed {num_bits} unbiased bits.")
+    print("Von Neumann assumption: use one physical d6 rolled independently each time.")
+    print("If using multiple dice, do not assign fixed first/second pair roles to different dice.")
     print("Enter 1 die roll at a time (1-6). Input/pairs/bits are not echoed. Type 'q' to abort.\n")
     while len(bits) < num_bits:
         if len(rolls) >= max_rolls:
-            q = analyze_roll_quality(rolls, pair_bits, num_bits)
+            q = analyze_roll_quality(rolls, pair_bits, num_bits, mode="von-neumann")
             q['warnings'].append(f"roll cap hit ({max_rolls})")
             q['verdict'] = 'SUSPECT'
             print_quality_report(q)
@@ -250,7 +268,7 @@ def collect_entropy_bits(num_bits):
         a, b = pending; pending.clear(); pair_bits.append((a, b))
         if a == b: continue
         bits.append(0 if a < b else 1)
-    q = analyze_roll_quality(rolls, pair_bits, num_bits)
+    q = analyze_roll_quality(rolls, pair_bits, num_bits, mode="von-neumann")
     print_quality_report(q)
     abort_if_not_good(q)
     print(f"Done. Extracted {num_bits} unbiased bits.\n")
@@ -369,6 +387,10 @@ def main(argv=None):
     else:
         print("\nBIP39 passphrase: none. This matches common Phantom/Solflare mnemonic-only recovery.")
     seed = Mnemonic("english").to_seed(words, passphrase)
+    if args.show_private_derivations:
+        print(colorize("\nWARNING: --show-private-derivations prints direct spend authority. Do not screenshot, log, copy, or expose this terminal.", "red"))
+        if getpass.getpass("Type SHOW PRIVATE KEYS to continue: ") != "SHOW PRIVATE KEYS":
+            raise SystemExit("Aborted: private-key display not confirmed.")
     print_derivation_profiles(derive_wallet_profiles(seed), include_private=args.show_private_derivations)
     if not args.show_private_derivations:
         print("\nPrivate material hidden. Use --show-private-derivations only on a trusted airgap if needed.")

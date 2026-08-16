@@ -43,9 +43,9 @@
       <text x="42" y="264" fill="#94a3b8">Von Neumann debiasing: ties discarded, non-tie pairs emit bits.</text>
 
       <rect x="42" y="298" width="520" height="128" rx="14" fill="#111827" stroke="#1f2a44"/>
-      <text x="68" y="336" fill="#14f195" font-weight="700">RANDOMNESS QUALITY REPORT</text>
-      <text x="68" y="372" fill="#e2e8f0">Verdict: GOOD</text>
-      <text x="68" y="404" fill="#94a3b8">Rolls: 578  ·  Bits: 256  ·  Warnings: none</text>
+      <text x="68" y="336" fill="#14f195" font-weight="700">DICE ANOMALY SCREEN</text>
+      <text x="68" y="372" fill="#e2e8f0">Verdict: NO_ANOMALY</text>
+      <text x="68" y="404" fill="#94a3b8">No obvious anomaly; not entropy proof</text>
 
       <rect x="608" y="298" width="520" height="128" rx="14" fill="#151023" stroke="#36235d"/>
       <text x="634" y="336" fill="#c084fc" font-weight="700">CEREMONY FLOW</text>

@@ -12,7 +12,7 @@ Helps with:
 
 - Local Solana key generation without browser wallet-provider keygen.
 - Physical dice entropy.
-- Von Neumann debiasing by default.
+- Von Neumann debiasing by default, assuming one independently rolled physical d6 or no fixed first/second roles across different dice.
 - Pinned local wheel dependencies.
 - Published BIP39, SLIP-0010, Base58, and Solana golden-vector tests.
 
@@ -31,7 +31,8 @@ The complete dice-roll transcript is secret key material, especially in hash-rol
 - 24-word BIP39 mnemonic.
 - Conservative entropy mode: `von-neumann`.
 - Hash-rolls mode minimum/default: 150 physical d6 rolls for 24 words.
-- Generation aborts if statistical checks detect an anomaly.
+- Generation aborts if the dice anomaly screen detects a statistical anomaly. This screen is a sanity check, not an entropy proof.
+- Von Neumann mode gates structural anomalies only (streaks, missing faces, pair yield): the </> extractor debiases any single IID die, so fair-die face uniformity is not required. Hash-rolls mode also gates fair-die uniformity (chi-square, tie rate) because hashing cannot create entropy the die did not produce.
 - BIP39 passphrase default: none, matching common Phantom/Solflare mnemonic-only recovery.
 - BIP39 passphrase is advanced opt-in via `--bip39-passphrase`; only use it after proving your restore wallet supports mnemonic + passphrase.
 - Solana paths only:
@@ -84,6 +85,7 @@ Setup is separate from wallet generation:
 4. At wallet-generation startup, it verifies:
    - `requirements-hashes.txt`
    - local wheel SHA256 hashes
+   - exact `pkgs/*.whl` allowlist
    - installed package versions
 
 ## Verification
@@ -98,20 +100,28 @@ Current tests cover:
 
 - BIP39 official mnemonic + seed vector.
 - SLIP-0010 official ed25519 vector.
-- End-to-end Solana golden vector for `m/44'/501'/0'/0'`.
+- End-to-end Solana golden vectors: `m/44'/501'/0'/0'`, `m/44'/501'/1'/0'`, BIP39 `TREZOR` passphrase.
 - Base58 known vector.
 - Hash-roll quality reporting regression.
+- Fair-die false-rejection Monte Carlo gate.
+- Biased-but-IID die: accepted by Von Neumann gate, rejected by hash-rolls gate.
 - Runtime no-install regression.
+- `pkgs/` wheel allowlist (extra/unlisted wheel rejected).
+- Import-location verification.
 - Safe hash-roll minimum.
 - Suspect entropy abort.
 - Hidden mnemonic gap check.
-- Offline setup script behavior.
+- Private-derivation display confirmation gate.
+- No misleading numeric score.
+- Offline setup script behavior (explicit venv interpreter, no bare `pip`).
+- CI action SHA-40 pinning.
+- README claims match repository reality.
 
 ## Recommended ceremony
 
 1. Fresh offline machine.
 2. Install only from local `pkgs/` via `setup_env.bat`.
-3. Roll physical dice yourself.
+3. Roll one physical d6 yourself, independently for every entry. If using multiple dice, do not assign permanent first/second pair roles to different dice.
 4. Do not retain dice transcript.
 5. Write mnemonic/passphrase on paper or steel only.
 6. Record derivation path and first address.
