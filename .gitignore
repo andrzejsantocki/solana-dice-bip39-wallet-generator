@@ -8,6 +8,3 @@ Thumbs.db
 .hermes-tmp*/
 **/.hermes-tmp*/
 
-test*.py
-*_test.py
-.github/workflows/tests.yml

@@ -1,5 +1,7 @@
 # Solana Dice BIP39 Wallet Generator
 
+[![tests](https://github.com/andrzejsantocki/solana-dice-bip39-wallet-generator/actions/workflows/tests.yml/badge.svg)](https://github.com/andrzejsantocki/solana-dice-bip39-wallet-generator/actions/workflows/tests.yml)
+
 ![Offline Solana Wallet Generator cover](assets/cover.png)
 
 Offline Solana wallet generator from physical dice entropy.
@@ -96,7 +98,31 @@ Run the built-in self-test before any wallet ceremony:
 .venv\Scripts\python.exe -I generate_wallet.py --self-test
 ```
 
-The self-test checks BIP39 official entropy/seed vectors, SLIP-0010 ed25519 master/child vectors, Base58 leading-zero encoding, and Solana golden addresses for `m/44'/501'/0'/0'`, `m/44'/501'/1'/0'`, and the BIP39 `TREZOR` passphrase case. This public repository does not currently ship its local development test suite or GitHub Actions workflow.
+The self-test and CI test suite check BIP39 official entropy/seed vectors, SLIP-0010 ed25519 master/child vectors, Base58 leading-zero encoding, Solana golden addresses for `m/44'/501'/0'/0'`, `m/44'/501'/1'/0'`, and the BIP39 `TREZOR` passphrase case, plus wheel allowlist regressions. CI runs these tests on every push/PR.
+
+Developer test run:
+
+```bash
+python -m unittest discover -v -s . -p 'test*.py'
+```
+
+## Memory hygiene limits
+
+Python cannot securely zeroize all mnemonic/passphrase/seed material. Secrets can remain in interpreter objects, terminal scrollback, RAM, swap, hibernation files, crash dumps, malware logs, and peripheral/firmware capture. For serious key ceremonies:
+
+- use a fresh offline machine/session
+- disable swap/pagefile and hibernation before the ceremony
+- avoid screenshots, clipboard, terminal logging, shell history, and networked printers
+- power off after use if you cannot trust RAM persistence assumptions
+- prefer paper/steel backup only
+
+This tool avoids intentionally saving secrets and uses hidden input for dice/passphrase/check prompts, but OS-level memory hygiene remains the user's responsibility.
+
+## Wheel reproducibility / supply-chain notes
+
+Bundled wheels are installed only with `--no-index --find-links=./pkgs --require-hashes`. The runtime also verifies `requirements-hashes.txt`, local wheel SHA256 hashes, exact `pkgs/*.whl` allowlist, installed versions, and import locations.
+
+For higher assurance, compare the committed wheel hashes against independently downloaded PyPI artifacts on a separate trusted machine, or publish the expected hashes in an independently signed release note/tag. A repository compromise could otherwise update both `pkgs/*.whl` and `requirements-hashes.txt` together.
 
 ## Recommended ceremony
 
