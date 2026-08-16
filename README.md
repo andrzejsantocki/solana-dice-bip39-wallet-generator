@@ -31,7 +31,7 @@ The complete dice-roll transcript is secret key material, especially in hash-rol
 - 24-word BIP39 mnemonic.
 - Conservative entropy mode: `von-neumann`.
 - Hash-rolls mode minimum/default: 150 physical d6 rolls for 24 words.
-- Generation aborts unless randomness quality is `GOOD`.
+- Generation aborts if statistical checks detect an anomaly.
 - BIP39 passphrase default: none, matching common Phantom/Solflare mnemonic-only recovery.
 - BIP39 passphrase is advanced opt-in via `--bip39-passphrase`; only use it after proving your restore wallet supports mnemonic + passphrase.
 - Solana paths only:
