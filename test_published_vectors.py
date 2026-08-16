@@ -28,6 +28,14 @@ class PublishedVectorTests(unittest.TestCase):
         self.assertEqual(gw.compress_point(gw.point_from_priv(int.from_bytes(k, 'big'))).hex(),
                          '03501e454bf00751f24b1b489aa925215d66af2234e3891c3b21a52bedb3cd711c')
 
+    def test_end_to_end_solana_bip39_to_phantom_address_golden_vector(self):
+        # Independent public Solana/BIP44 vector for the standard BIP39 test mnemonic.
+        # Path: m/44'/501'/0'/0' (Phantom/Solflare common)
+        words = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+        seed = gw.Mnemonic('english').to_seed(words, '')
+        address, _secret32 = gw.sol_from_seed(seed, (44, 501, 0, 0))
+        self.assertEqual(address, 'HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk')
+
     def test_slip0010_ed25519_vector_1_master_and_m_0h(self):
         seed = bytes.fromhex('000102030405060708090a0b0c0d0e0f')
         k, c = gw.slip10_ed25519_master(seed)
