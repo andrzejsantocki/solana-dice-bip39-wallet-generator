@@ -14,7 +14,7 @@ Helps with:
 - Physical dice entropy.
 - Von Neumann debiasing by default, assuming one independently rolled physical d6 or no fixed first/second roles across different dice.
 - Pinned local wheel dependencies.
-- Published BIP39, SLIP-0010, Base58, and Solana golden-vector tests.
+- Local-only operation with pinned dependency artifacts.
 
 Does not solve:
 
@@ -90,32 +90,7 @@ Setup is separate from wallet generation:
 
 ## Verification
 
-```bash
-python -m unittest discover -v -s . -p 'test*.py'
-```
-
-CI runs these tests on every push/PR.
-
-Current tests cover:
-
-- BIP39 official mnemonic + seed vector.
-- SLIP-0010 official ed25519 vector.
-- End-to-end Solana golden vectors: `m/44'/501'/0'/0'`, `m/44'/501'/1'/0'`, BIP39 `TREZOR` passphrase.
-- Base58 known vector.
-- Hash-roll quality reporting regression.
-- Fair-die false-rejection Monte Carlo gate.
-- Biased-but-IID die: accepted by Von Neumann gate, rejected by hash-rolls gate.
-- Runtime no-install regression.
-- `pkgs/` wheel allowlist (extra/unlisted wheel rejected).
-- Import-location verification.
-- Safe hash-roll minimum.
-- Suspect entropy abort.
-- Hidden mnemonic gap check.
-- Private-derivation display confirmation gate.
-- No misleading numeric score.
-- Offline setup script behavior (explicit venv interpreter, no bare `pip`).
-- CI action SHA-40 pinning.
-- README claims match repository reality.
+This public repository does not currently ship its local development test suite or GitHub Actions workflow. Before trusting any release for real funds, independently verify the generated mnemonic/address flow against known BIP39, SLIP-0010 ed25519, and Solana derivation vectors, then restore the address in your target wallet before funding.
 
 ## Recommended ceremony
 
