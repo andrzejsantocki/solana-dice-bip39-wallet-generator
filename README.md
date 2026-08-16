@@ -103,7 +103,7 @@ The self-test and CI test suite check BIP39 official entropy/seed vectors, SLIP-
 Developer test run:
 
 ```bash
-python -m unittest discover -v -s tests -p 'test*.py'
+python -m unittest discover -v -s verification -p 'test*.py'
 ```
 
 ## Memory hygiene limits

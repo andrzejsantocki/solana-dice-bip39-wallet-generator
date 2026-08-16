@@ -18,8 +18,8 @@ class ReadmeAccuracyTests(unittest.TestCase):
         text = Path('README.md').read_text(encoding='utf-8').lower()
         self.assertIn('python -m unittest discover', text)
         self.assertIn('ci runs these tests on every push/pr', text)
-        for fname in ('tests/test_published_vectors.py', 'tests/test_operational_safety.py',
-                      'tests/test_setup_env.py', 'tests/test_ci_pinning.py', 'tests/test_readme_accuracy.py'):
+        for fname in ('verification/test_published_vectors.py', 'verification/test_operational_safety.py',
+                      'verification/test_setup_env.py', 'verification/test_ci_pinning.py', 'verification/test_readme_accuracy.py'):
             self.assertTrue(Path(fname).exists(), f'{fname} missing but README claims a test suite')
         self.assertTrue(Path('.github/workflows/tests.yml').exists(), 'CI workflow missing but README claims CI')
 
