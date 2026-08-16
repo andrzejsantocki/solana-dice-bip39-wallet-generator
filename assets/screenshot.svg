@@ -1,23 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720">
-  <rect width="1100" height="720" fill="#f7f7f2"/>
-  <rect x="60" y="50" width="980" height="620" rx="10" fill="#ffffff" stroke="#d8d8d0"/>
-  <rect x="60" y="50" width="980" height="42" rx="10" fill="#24292f"/>
-  <text x="85" y="77" fill="#f0f0f0" font-family="Consolas, Menlo, monospace" font-size="16">wallet-local-dice-generator — airgapped CLI</text>
-  <g font-family="Consolas, Menlo, monospace" font-size="17" fill="#24292f">
-    <text x="85" y="130">$ python generate_wallet.py --entropy-mode von-neumann --words 24</text>
-    <text x="85" y="170" font-weight="700">=== Offline dice-based BTC + SOL wallet generator ===</text>
-    <text x="85" y="210">Need 256 unbiased bits.</text>
-    <text x="85" y="240">Enter 1 die roll at a time (1-6). App pairs in code.</text>
-    <text x="85" y="285" fill="#b42318" font-weight="700">=== RANDOMNESS QUALITY REPORT ===</text>
-    <text x="85" y="320">Verdict:       GOOD</text>
-    <text x="85" y="350">Rolls:         578</text>
-    <text x="85" y="380">Non-tie pairs: 256</text>
-    <text x="85" y="410">Warnings:      none</text>
-    <text x="85" y="465" fill="#936f00" font-weight="700">MNEMONIC (write on paper/steel; terminal cannot securely erase secrets)</text>
-    <text x="85" y="500" fill="#1a7f37">[24 BIP39 words hidden in screenshot]</text>
-    <text x="85" y="545" fill="#0969da" font-weight="700">--- Common wallet derivation conventions ---</text>
-    <text x="85" y="580">[BTC] m/44'/0'/0'/0/0     Address: 1...</text>
-    <text x="85" y="610">[SOL] m/44'/501'/0'/0'    Address: 9...</text>
-    <text x="85" y="640" fill="#b42318">Private material hidden. Verify restore before sending funds.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <radialGradient id="glow" cx="78%" cy="18%" r="55%">
+      <stop offset="0" stop-color="#14f195" stop-opacity="0.30"/>
+      <stop offset="0.42" stop-color="#9945ff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#0b1020" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bar" x1="0" x2="1">
+      <stop offset="0" stop-color="#14f195"/>
+      <stop offset="0.55" stop-color="#80ecff"/>
+      <stop offset="1" stop-color="#9945ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="1400" height="900" fill="#080b14"/>
+  <rect width="1400" height="900" fill="url(#glow)"/>
+  <g opacity="0.20" stroke="#ffffff" stroke-width="1">
+    <path d="M0 170H1400M0 310H1400M0 450H1400M0 590H1400M0 730H1400"/>
+    <path d="M180 0V900M390 0V900M600 0V900M810 0V900M1020 0V900M1230 0V900"/>
+  </g>
+
+  <text x="92" y="112" fill="#f8fafc" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="52" font-weight="750" letter-spacing="-1.5">Solana Dice BIP39 Wallet Generator</text>
+  <text x="96" y="154" fill="#a9b6ce" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22">Air-gapped dice entropy → BIP39 seed → SLIP-0010 Ed25519 → Solana address</text>
+
+  <g transform="translate(92 205)" filter="url(#shadow)">
+    <rect width="1216" height="590" rx="22" fill="#0d1222" stroke="#26314c"/>
+    <rect width="1216" height="48" rx="22" fill="#151b2e"/>
+    <circle cx="31" cy="24" r="7" fill="#ff5f56"/>
+    <circle cx="55" cy="24" r="7" fill="#ffbd2e"/>
+    <circle cx="79" cy="24" r="7" fill="#27c93f"/>
+    <text x="110" y="31" fill="#bcc7dc" font-family="JetBrains Mono, Consolas, monospace" font-size="15">offline ceremony / no runtime package installation</text>
+    <rect x="0" y="48" width="1216" height="4" fill="url(#bar)"/>
+
+    <g font-family="JetBrains Mono, Consolas, monospace" font-size="20">
+      <text x="42" y="98" fill="#7dd3fc">$ python generate_wallet.py --entropy-mode von-neumann --words 24</text>
+      <text x="42" y="145" fill="#f8fafc" font-weight="700">Wallet Dice</text>
+      <text x="42" y="177" fill="#cbd5e1">=== Offline dice-based Solana wallet generator ===</text>
+
+      <text x="42" y="230" fill="#f8fafc">Need 256 unbiased bits from physical dice.</text>
+      <text x="42" y="264" fill="#94a3b8">Von Neumann debiasing: ties discarded, non-tie pairs emit bits.</text>
+
+      <rect x="42" y="298" width="520" height="128" rx="14" fill="#111827" stroke="#1f2a44"/>
+      <text x="68" y="336" fill="#14f195" font-weight="700">RANDOMNESS QUALITY REPORT</text>
+      <text x="68" y="372" fill="#e2e8f0">Verdict: GOOD</text>
+      <text x="68" y="404" fill="#94a3b8">Rolls: 578  ·  Bits: 256  ·  Warnings: none</text>
+
+      <rect x="608" y="298" width="520" height="128" rx="14" fill="#151023" stroke="#36235d"/>
+      <text x="634" y="336" fill="#c084fc" font-weight="700">SECRET HANDLING</text>
+      <text x="634" y="372" fill="#e2e8f0">Mnemonic shown once only</text>
+      <text x="634" y="404" fill="#94a3b8">Dice transcript is secret key material</text>
+
+      <text x="42" y="482" fill="#facc15">MNEMONIC: [24 BIP39 words hidden]</text>
+      <text x="42" y="526" fill="#f87171">WARNING: terminal/RAM/swap cannot be securely erased by Python.</text>
+
+      <rect x="42" y="552" width="1086" height="84" rx="14" fill="#071a16" stroke="#14532d"/>
+      <text x="68" y="588" fill="#14f195" font-weight="700">SOL m/44'/501'/0'/0'</text>
+      <text x="68" y="620" fill="#d1fae5">Address: HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk</text>
+    </g>
+  </g>
+
+  <g transform="translate(92 835)" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" fill="#9fb0ce">
+    <text>Local wheels · hash verified · no network · explicit derivation paths · published golden-vector tests</text>
   </g>
 </svg>
