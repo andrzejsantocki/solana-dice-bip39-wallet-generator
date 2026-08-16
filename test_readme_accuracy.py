@@ -9,6 +9,10 @@ class ReadmeAccuracyTests(unittest.TestCase):
         self.assertIn('setup_env.bat', text)
         self.assertNotIn('--force-reinstall', text)
         self.assertNotIn('startup performs a pip reinstall', text)
+        self.assertIn('bip39 passphrase compatibility', text)
+        self.assertIn('by default, this tool uses no bip39 passphrase', text)
+        self.assertIn('--bip39-passphrase', text)
+        self.assertIn('phantom/solflare recovery flows that ask for only the 12/24 words', text)
 
 
 if __name__ == '__main__':

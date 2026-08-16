@@ -48,6 +48,12 @@ class OperationalSafetyTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             gw.abort_if_not_good(q)
 
+    def test_bip39_passphrase_is_explicit_opt_in(self):
+        args = gw.parse_args([])
+        self.assertFalse(args.bip39_passphrase)
+        args = gw.parse_args(['--bip39-passphrase'])
+        self.assertTrue(args.bip39_passphrase)
+
 
 if __name__ == '__main__':
     unittest.main()

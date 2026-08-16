@@ -32,6 +32,8 @@ The complete dice-roll transcript is secret key material, especially in hash-rol
 - Conservative entropy mode: `von-neumann`.
 - Hash-rolls mode minimum/default: 150 physical d6 rolls for 24 words.
 - Generation aborts unless randomness quality is `GOOD`.
+- BIP39 passphrase default: none, matching common Phantom/Solflare mnemonic-only recovery.
+- BIP39 passphrase is advanced opt-in via `--bip39-passphrase`; only use it after proving your restore wallet supports mnemonic + passphrase.
 - Solana paths only:
   - `m/44'/501'/0'/0'`
   - `m/44'/501'/1'/0'`
@@ -55,6 +57,18 @@ Bad dice report:
 
 ```bat
 .venv\Scripts\python.exe generate_wallet.py --bad-dice-report --color always
+```
+
+## BIP39 passphrase compatibility
+
+By default, this tool uses no BIP39 passphrase. That matches common Phantom/Solflare recovery flows that ask for only the 12/24 words.
+
+A BIP39 passphrase changes the seed completely. The same words with a passphrase produce different Solana addresses. Do not fund a passphrase-derived wallet unless you have independently restored the same address in software that explicitly supports BIP39 passphrase + the same derivation path.
+
+Use passphrase mode only if you have tested the full restore path:
+
+```bat
+.venv\Scripts\python.exe generate_wallet.py --bip39-passphrase
 ```
 
 ## Dependency enforcement

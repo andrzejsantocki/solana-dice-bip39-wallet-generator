@@ -320,6 +320,7 @@ def parse_args(argv=None):
     parser.add_argument("--roll-count", type=int, default=150, help="Physical die rolls for hash-rolls mode. Minimum/default: 150 for 24 words")
     parser.add_argument("--no-gap-check", dest="gap_check", action="store_false", help="Skip interactive mnemonic recall/gap check")
     parser.add_argument("--show-private-derivations", action="store_true", help="Also print private material for every listed derivation path")
+    parser.add_argument("--bip39-passphrase", action="store_true", help="Prompt for an optional BIP39 passphrase. Advanced: many wallet apps do not support passphrase restore.")
     parser.add_argument("--color", choices=("auto", "always", "never"), default="auto")
     parser.add_argument("--no-color", dest="color", action="store_const", const="never")
     parser.add_argument("--bad-dice-report", action="store_true", help="Print synthetic bad/dishonest dice quality examples, then exit")
@@ -345,16 +346,24 @@ def main(argv=None):
     print(colorize("MNEMONIC (write this down on paper/steel):", "yellow"))
     print(colorize(words, "green"))
     print(colorize("=" * 60, "yellow"))
-    passphrase = getpass.getpass("\nOptional BIP39 passphrase (leave blank for none): ")
-    if passphrase and getpass.getpass("Confirm passphrase: ") != passphrase:
-        raise SystemExit("Passphrase mismatch.")
+    passphrase = ""
+    if args.bip39_passphrase:
+        print(colorize("\nBIP39 PASSPHRASE MODE: this changes the derived seed. Confirm your target wallet supports restoring mnemonic + passphrase before funding.", "yellow"))
+        passphrase = getpass.getpass("BIP39 passphrase (leave blank for none): ")
+        if passphrase and getpass.getpass("Confirm passphrase: ") != passphrase:
+            raise SystemExit("Passphrase mismatch.")
+    else:
+        print("\nBIP39 passphrase: none. This matches common Phantom/Solflare mnemonic-only recovery.")
     seed = Mnemonic("english").to_seed(words, passphrase)
     print_derivation_profiles(derive_wallet_profiles(seed), include_private=args.show_private_derivations)
     if not args.show_private_derivations:
         print("\nPrivate material hidden. Use --show-private-derivations only on a trusted airgap if needed.")
     if args.gap_check:
         mnemonic_gap_check(words)
-    print("\nVerify these addresses independently in Phantom/Solflare before sending funds.")
+    if passphrase:
+        print("\nVerify restore in a wallet that explicitly supports BIP39 passphrase + this derivation path before sending funds.")
+    else:
+        print("\nVerify these addresses independently in Phantom/Solflare mnemonic-only recovery before sending funds.")
 
 
 if __name__ == "__main__":
